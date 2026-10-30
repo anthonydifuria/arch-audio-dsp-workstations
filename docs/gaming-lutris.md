@@ -1,90 +1,125 @@
-# Gaming & Lutris
+# Gaming — Lutris
 
-> Gaming setup using Lutris as the primary platform for running Windows games and applications on Linux.
-
----
-
-## Lutris
-
-Lutris is the main tool for gaming on both systems. It provides:
-
-- Native Linux game support
-- Wine/Proton integration for Windows games
-- Emulator management
-- Game library organization
-- Community install scripts
-
-### Installation
-
-```fish
-sudo pacman -S --needed lutris
-```
-
-### Additional Gaming Dependencies
-
-```fish
-sudo pacman -S --needed \
-  wine-staging winetricks \
-  lib32-mesa lib32-vulkan-radeon \
-  vulkan-radeon mesa-utils \
-  gamemode lib32-gamemode \
-  mangohud lib32-mangohud
-```
-
-### Wine Prefix Management
-
-Lutris handles Wine prefixes automatically, but manual management is available:
-
-```fish
-# List Wine prefixes managed by Lutris
-ls ~/.local/share/lutris/runners/wine/
-
-# Run Winetricks for a specific prefix
-WINEPREFIX=~/.local/share/lutris/runners/winexxx winetricks
-```
+> Modern gaming setup based on Lutris, Wine, and Vulkan.
+> Replaces the old KVM/libvirt Windows VM configuration previously used on this machine.
 
 ---
 
-## Gaming Performance Tools
+## Philosophy
+
+This machine uses **Lutris** as the primary gaming platform instead of a Windows virtual machine.
+
+- **No virtualization overhead**: games run natively through translation layers.
+- **Proven compatibility**: Lutris provides community-maintained install scripts for thousands of games.
+- **Performance**: with Vulkan and GameMode, native-level performance is achievable on most titles.
+
+> ⚠️ **KVM/libvirt and Windows VMs are NOT used on this machine.**
+> All Windows gaming is handled through Lutris + Wine/Proton.
+
+---
+
+## Core Installation
+
+### Lutris
+
+```fish
+yay -S --needed lutris
+```
+
+### Wine (Staging)
+
+`wine-staging` includes additional patches for better game compatibility.
+
+```fish
+yay -S --needed wine-staging winetricks
+```
+
+### Vulkan (AMD Radeon)
+
+Garuda ships with Vulkan support, but we verify all the necessary drivers are in place:
+
+```fish
+yay -S --needed \
+  mesa-utils \
+  vulkan-radeon lib32-vulkan-radeon \
+  lib32-mesa
+```
+
+Verify Vulkan is working:
+
+```fish
+vulkaninfo | head
+```
+
+---
+
+## Performance Optimization
 
 ### GameMode
 
-Feral GameMode optimizes system performance on demand:
+Feral GameMode applies temporary optimizations to the system when a game is running (CPU governor, I/O priority, GPU performance mode).
 
 ```fish
-# Enable GameMode for a game
-gamemoderun ./game-executable
+yay -S --needed gamemode lib32-gamemode
+```
 
-# Or via Lutris (automatic integration)
+Enable in Lutris:
+- Right-click a game → **Configure** → **System options** → **Enable Feral GameMode**.
+
+Or launch any game with:
+```fish
+gamemoderun ./game-executable
 ```
 
 ### MangoHud
 
-Performance overlay for monitoring FPS, GPU, CPU, and more:
+Overlay for monitoring FPS, frametimes, CPU/GPU usage, temperatures, and more.
 
 ```fish
-# Enable MangoHud
+yay -S --needed mangohud lib32-mangohud
+```
+
+Enable in Lutris:
+- Right-click a game → **Configure** → **System options** → **Enable MangoHud**.
+
+Or launch any game with:
+```fish
 mangohud ./game-executable
-
-# Or via environment variable
-MANGOHUD=1 ./game-executable
 ```
 
----
-
-## Controller Support
-
+Combine both:
 ```fish
-sudo pacman -S --needed \
-  steam-controller \
-  xboxdrv \
-  ds4drv
+mangohud gamemoderun ./game-executable
 ```
 
 ---
 
-## Notes
+## Recommended Wine Prefix Setup
 
-- KVM/libvirt and Windows VM are **not used** on this system
-- All Windows gaming is handled through Lutris + Wine/Proton
-- For specific game configurations, refer to Lutris community scripts
+When installing a Windows game through Lutris:
+
+1. **Use the latest Wine-GE or Proton-GE** runner (downloadable directly from Lutris → **Manage Runners**).
+2. **Enable DXVK** (DirectX → Vulkan) for DirectX 9/10/11 games.
+3. **Enable VKD3D** for DirectX 12 games.
+4. **Set Windows version** to Windows 10 in `winecfg`.
+
+---
+
+## Verification Checklist
+
+Before gaming, verify:
+
+- [ ] `lutris` launches without errors.
+- [ ] `wine --version` shows a staging version.
+- [ ] `vulkaninfo | head` shows the Radeon GPU.
+- [ ] `gamemoded --status` shows the daemon is running.
+- [ ] `mangohud glxgears` shows the overlay correctly.
+
+---
+
+## Notes & Gotchas
+
+- **Do NOT install KVM/libvirt on this machine**: the gaming setup is fully handled by Lutris. The old VM-based configuration has been deprecated.
+- **`wine-staging` vs `wine`**: always prefer `wine-staging` for gaming; it includes many compatibility patches not present in the base `wine` package.
+- **32-bit support**: `lib32-*` packages are essential because many Windows games are 32-bit.
+- **Proton-GE**: community builds of Valve's Proton with extra patches; often fixes games that stock Proton cannot run.
